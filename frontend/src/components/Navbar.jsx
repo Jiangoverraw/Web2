@@ -1,13 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { User } from 'react-feather'; // Thêm icon User từ react-feather
+import { User } from 'react-feather'; // 
 import axios from 'axios';
 
 const Navbar = () => {
     const { token, userData, setToken, setUserData } = useContext(AppContext);
     const navigate = useNavigate();
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Trạng thái mở/đóng dropdown
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false); // 
 
     useEffect(() => {
         if (!userData && token) {
@@ -36,7 +36,7 @@ const Navbar = () => {
         navigate('/login');
     };
 
-    console.log("User Data:", userData); // Debugging line to check userData
+    console.log("User Data:", userData); 
 
     return (
         <header className="bg-gray-500/20 backdrop-blur-md text-gray-100 py-4 px-6 flex justify-between items-center fixed top-0 left-0 w-full z-50">
@@ -46,25 +46,22 @@ const Navbar = () => {
             <nav className="flex items-center gap-6">
                 <Link to="/" className="hover:underline">Home</Link>
                 <Link to="/post" className="hover:underline">Post</Link>
-                <Link to="/contact" className="hover:underline">Contact</Link>
-                <Link to="/about" className="hover:underline">About</Link>
             </nav>
             <div className="flex items-center gap-4 relative">
                 {token && userData ? (
                     <>
                         <div
                             className="flex items-center gap-2 cursor-pointer"
-                            onClick={() => setIsDropdownOpen(!isDropdownOpen)} // Toggle dropdown
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)} 
                         >
                             <img
-                                src={userData.image || "/default-avatar.png"}
+                                src={userData?.image || "https://via.placeholder.com/40"} 
                                 alt="User Avatar"
                                 className="w-10 h-10 rounded-full"
                             />
-                            <span>{userData.name}</span>
+                            <span>{userData?.name}</span>
                         </div>
 
-                        {/* Dropdown Menu */}
                         {isDropdownOpen && (
                             <div className="absolute top-12 right-0 bg-white shadow-md rounded-lg w-48">
                                 <div className="absolute -top-2 right-4 w-4 h-4 bg-white rotate-45 shadow-md z-0"></div>

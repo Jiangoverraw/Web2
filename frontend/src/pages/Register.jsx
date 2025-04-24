@@ -45,7 +45,6 @@ const Register = () => {
 
     return (
         <div className="h-screen w-screen overflow-hidden flex items-center justify-center relative">
-            {/* Background image */}
             <div className="absolute inset-0 z-0">
                 <img
                     src="https://images.wallpaperscraft.com/image/single/bmw_i8_concept_98354_1920x1080.jpg"
@@ -54,7 +53,6 @@ const Register = () => {
                 />
             </div>
 
-            {/* Centered Form */}
             <div className="relative z-10">
                 <form
                     className="md:w-96 w-80 bg-white/30 backdrop-blur-md p-8 rounded-2xl shadow-lg border border-white/30"
@@ -65,7 +63,6 @@ const Register = () => {
                         Create your account
                     </p>
 
-                    {/* Name */}
                     <div className="flex items-center mt-6 w-full border border-gray-300 h-12 rounded-full pl-6 gap-2 bg-white">
                         <input
                             type="text"
@@ -76,7 +73,6 @@ const Register = () => {
                         />
                     </div>
 
-                    {/* Phone */}
                     <div className="flex items-center mt-4 w-full border border-gray-300 h-12 rounded-full pl-6 gap-2 bg-white">
                         <input
                             type="text"
@@ -87,7 +83,6 @@ const Register = () => {
                         />
                     </div>
 
-                    {/* Email */}
                     <div className="flex items-center mt-4 w-full border border-gray-300 h-12 rounded-full pl-6 gap-2 bg-white">
                         <input
                             type="email"
@@ -98,7 +93,7 @@ const Register = () => {
                         />
                     </div>
 
-                    {/* Password */}
+
                     <div className="flex items-center mt-4 w-full border border-gray-300 h-12 rounded-full pl-6 pr-4 bg-white">
                         <input
                             type={showPassword ? "text" : "password"}
@@ -112,7 +107,6 @@ const Register = () => {
                         </button>
                     </div>
 
-                    {/* Confirm Password */}
                     <div className="flex items-center mt-4 w-full border border-gray-300 h-12 rounded-full pl-6 pr-4 bg-white">
                         <input
                             type={showConfirm ? "text" : "password"}
@@ -126,7 +120,6 @@ const Register = () => {
                         </button>
                     </div>
 
-                    {/* Submit */}
                     <button
                         type="submit"
                         className="mt-6 w-full h-11 rounded-full text-gray bg-indigo-200 hover:bg-indigo-300 transition"
@@ -134,7 +127,6 @@ const Register = () => {
                         Sign up
                     </button>
 
-                    {/* Switch to login */}
                     <p className="text-black text-sm mt-4 text-center">
                         Already have an account?{' '}
                         <Link className="text-indigo-200 hover:underline" to="/login">

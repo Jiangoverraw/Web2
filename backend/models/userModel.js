@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema({
     },
     image: {
         type: String,
+        default: 'https://icon-library.com/images/no-user-image-icon/no-user-image-icon-8.jpg',
         required: true
     }
 })

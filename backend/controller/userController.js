@@ -6,8 +6,9 @@ import { OAuth2Client } from "google-auth-library";
 import PostModel from "../models/postModel.js";
 import { v2 as cloudinary } from "cloudinary";
 
-// Sử dụng Client ID từ Google Cloud Console
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+
 export const registerUser = async (req, res) => {
     try {
         const { name, email, password_1, password_2, phone } = req.body;
@@ -96,7 +97,6 @@ export const loginUser = async (req, res) => {
     }
 };
 
-// Xử lý đăng nhập Google
 export const googleLogin = async (req, res) => {
     try {
         const { token } = req.body;
@@ -105,7 +105,6 @@ export const googleLogin = async (req, res) => {
             return res.status(400).json({ error: "Google token is required" });
         }
 
-        // Xác minh token Google
         const ticket = await client.verifyIdToken({
             idToken: token,
             audience: process.env.GOOGLE_CLIENT_ID,
@@ -114,23 +113,20 @@ export const googleLogin = async (req, res) => {
         const payload = ticket.getPayload();
         const { email, name, picture } = payload;
 
-        // Kiểm tra xem người dùng đã tồn tại chưa
         let user = await userModel.findOne({ email });
 
         if (!user) {
-            // Nếu người dùng chưa tồn tại, tạo mới
             user = new userModel({
                 name,
                 email,
                 image: picture,
-                googleId: payload.sub, // ID duy nhất từ Google
+                googleId: payload.sub,
                 password: '123123123',
                 phone: 'unknown',
             });
             await user.save();
         }
 
-        // Tạo token JWT
         const accesstoken = jwt.sign(
             { id: user._id },
             process.env.ACCESS_TOKEN_SECRET,
@@ -155,9 +151,9 @@ export const googleLogin = async (req, res) => {
 
 export const getUser = async (req, res) => {
     try {
-        const userId = req.body.userId; // Lấy userId từ middleware authUser
+        const userId = req.body.userId;
 
-        const user = await userModel.findById(userId).select("-password"); // Không trả về mật khẩu
+        const user = await userModel.findById(userId).select("-password");
         if (!user) {
             return res.status(404).json({ success: false, error: "User not found" });
         }
@@ -203,9 +199,7 @@ export const deleteUser = async (req, res) => {
 export const updateProfile = async (req, res) => {
     try {
         const { name, phone, password } = req.body;
-        const { userId } = req.user
-
-        console.log(req.file); // Debug log
+        const userId = req.body.userId;
 
         if (!name || !phone) {
             return res.status(400).json({ error: "Please fill all the required fields" });
@@ -217,12 +211,9 @@ export const updateProfile = async (req, res) => {
             return res.status(404).json({ error: "User not found" });
         }
 
-        // Cập nhật thông tin cơ bản
         user.name = name;
         user.phone = phone;
 
-
-        // Upload ảnh lên Cloudinary nếu có
         if (req.file) {
             try {
                 const result = await cloudinary.uploader.upload(req.file.path, {
@@ -237,7 +228,6 @@ export const updateProfile = async (req, res) => {
             }
         }
 
-        // Cập nhật mật khẩu nếu có
         if (password) {
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(password, salt);
@@ -252,21 +242,24 @@ export const updateProfile = async (req, res) => {
     }
 };
 
+
 export const createPost = async (req, res) => {
     try {
-        const { title, content, image, tags } = req.body;
-        const userId = req.body.userId; // Lấy userId từ middleware authUser
+        const { title, content, image, tags,category } = req.body;
+        const userId = req.body.userId;
 
-        if (!title || !content) {
+
+        if (!title || !content || !category) {
             return res.status(400).json({ success: false, error: "Title and content are required" });
         }
 
         const newPost = new PostModel({
-            user: userId,
+            user: userId, 
             title,
             content,
             image,
-            tags: tags ? tags.split(",").map((tag) => tag.trim()) : [],
+            category,
+            tags: typeof tags === "string" ? tags.split(",").map((tag) => tag.trim()) : [],
         });
 
         const savedPost = await newPost.save();
@@ -280,40 +273,13 @@ export const createPost = async (req, res) => {
 export const getAllPosts = async (req, res) => {
     try {
         const posts = await PostModel.find()
-            .populate("user", "name avatar") // Lấy thông tin người đăng bài
-            .populate("comments.user", "name avatar") // Lấy thông tin người bình luận
-            .populate("comments.replies.user", "name avatar") // Lấy thông tin người trả lời
-            .sort({ createdAt: -1 }); // Sắp xếp bài viết mới nhất
+            .populate("user", "name avatar")
+            .sort({ createdAt: -1 });
 
         res.status(200).json({ success: true, posts });
     } catch (error) {
         console.error("Error fetching posts:", error);
         res.status(500).json({ success: false, error: "Failed to fetch posts" });
-    }
-};
-
-export const addComment = async (req, res) => {
-    try {
-        const { postId, content } = req.body;
-        const userId = req.body.userId; // Lấy userId từ middleware authUser
-
-        const post = await PostModel.findById(postId);
-        if (!post) {
-            return res.status(404).json({ success: false, error: "Post not found" });
-        }
-
-        const newComment = {
-            user: userId,
-            content,
-        };
-
-        post.comments.push(newComment);
-        await post.save();
-
-        res.status(201).json({ success: true, comment: newComment });
-    } catch (error) {
-        console.error("Error adding comment:", error);
-        res.status(500).json({ success: false, error: "Failed to add comment" });
     }
 };
 
@@ -333,45 +299,10 @@ export const getPostById = async (req, res) => {
     }
 };
 
-// Thêm reply vào comment
-export const addReply = async (req, res) => {
-    try {
-        const { postId, commentId, content } = req.body;
-        const userId = req.user.userId; // Lấy userId từ middleware authUser
-
-        const post = await PostModel.findById(postId);
-        if (!post) {
-            return res.status(404).json({ success: false, error: "Post not found" });
-        }
-
-        const comment = post.comments.id(commentId);
-        if (!comment) {
-            return res.status(404).json({ success: false, error: "Comment not found" });
-        }
-
-        const newReply = {
-            user: userId, // Gán userId từ middleware
-            content,
-        };
-
-        comment.replies.push(newReply);
-        await post.save();
-
-        res.status(201).json({ success: true, reply: newReply });
-    } catch (error) {
-        console.error("Error adding reply:", error);
-        res.status(500).json({ success: false, error: "Failed to add reply" });
-    }
-};
-
 export const updatePost = async (req, res) => {
     try {
-        const { postId, title, content, image, tags } = req.body;
-        const userId = req.body.userId; // Lấy userId từ middleware authUser
-        
-        console.log("Post ID:", postId);
-        console.log("User ID:", userId);
-        console.log("Request Body:", req.body);
+        const { postId, title, content, image, tags, category } = req.body;
+        const userId = req.body.userId;
 
         const post = await PostModel.findById(postId);
 
@@ -379,42 +310,47 @@ export const updatePost = async (req, res) => {
             return res.status(404).json({ success: false, error: "Post not found" });
         }
 
-        // Kiểm tra quyền sở hữu bài viết
         if (post.user.toString() !== userId) {
             return res.status(403).json({ success: false, error: "You are not authorized to update this post" });
         }
 
-        // Cập nhật bài viết
+        if (category) post.category = category;
         if (title) post.title = title;
         if (content) post.content = content;
         if (image) post.image = image;
-        if (tags) post.tags = tags.split(",").map((tag) => tag.trim());
+        if (tags && typeof tags === "string") {
+            post.tags = tags.split(",").map((tag) => tag.trim());
+        } else if (Array.isArray(tags)) {
+            post.tags = tags;
+        }
 
         const updatedPost = await post.save();
 
-        res.status(200).json({ success: true, message: "Post updated successfully", post: updatedPost });
+        // Populate user information before sending the response
+        const populatedPost = await PostModel.findById(updatedPost._id).populate("user", "name avatar");
+
+        res.status(200).json({ success: true, message: "Post updated successfully", post: populatedPost });
     } catch (error) {
         console.error("Error updating post:", error);
         res.status(500).json({ success: false, error: "Failed to update post" });
     }
 };
-
+ 
 export const deletePost = async (req, res) => {
     try {
         const { postId } = req.body;
-        const userId = req.body.userId; // Lấy userId từ middleware authUser
+        const userId = req.body.userId;
 
         const post = await PostModel.findById(postId);
         if (!post) {
             return res.status(404).json({ success: false, error: "Post not found" });
         }
 
-        // Kiểm tra quyền sở hữu bài viết
         if (post.user.toString() !== userId) {
             return res.status(403).json({ success: false, error: "You are not authorized to delete this post" });
         }
 
-        await post.remove();
+        await PostModel.findByIdAndDelete(postId);
 
         res.status(200).json({ success: true, message: "Post deleted successfully" });
     } catch (error) {
@@ -422,3 +358,4 @@ export const deletePost = async (req, res) => {
         res.status(500).json({ success: false, error: "Failed to delete post" });
     }
 };
+

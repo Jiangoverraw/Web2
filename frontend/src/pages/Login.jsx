@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';  
 
 const Login = () => {
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ const Login = () => {
 
   const handleGoogleLoginError = (error) => {
     console.error('Google Login Failed:', error);
-    alert('Google Login Failed!');
+    alert('Google Login Failed!'); 
   };
 
   const handleSubmit = async (e) => {
@@ -82,7 +82,7 @@ const Login = () => {
 
           <div className="flex items-center gap-4 w-full my-5">
             <div className="w-full h-px bg-gray-500/90"></div>
-            <p className="text-sm text-gray-500/90">or sign in with email</p>
+            <p className=" text-gray-500/90">or sign in with email</p>
             <div className="w-full h-px bg-gray-500/90"></div>
           </div>
 
@@ -105,17 +105,6 @@ const Login = () => {
               required
             />
           </div>
-
-          <div className="w-full flex items-center justify-between mt-6 text-black text-sm">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" />
-              Remember me
-            </label>
-            <a href="#" className="underline">
-              Forgot password?
-            </a>
-          </div>
-
           <button
             type="submit"
             className="mt-6 w-full h-11 rounded-full text-gray bg-indigo-200 hover:bg-indigo-300 transition"

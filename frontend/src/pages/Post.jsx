@@ -6,12 +6,10 @@ const Post = () => {
     const { token, userData } = useContext(AppContext);
     const [posts, setPosts] = useState([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const [newPost, setNewPost] = useState({ title: "", content: "", tags: "", image: "" });
-    const [comment, setComment] = useState("");
-    const [activeMenu, setActiveMenu] = useState(null); // Quản lý menu popup
-    const [isEditFormOpen, setIsEditFormOpen] = useState(false); // Quản lý trạng thái mở form chỉnh sửa
-    const [editPost, setEditPost] = useState({}); // Lưu thông tin bài viết đang chỉnh sửa
-
+    const [newPost, setNewPost] = useState({ title: "", content: "", tags: "", image: "", category: "" });
+    const [activeMenu, setActiveMenu] = useState(null); 
+    const [isEditFormOpen, setIsEditFormOpen] = useState(false); 
+    const [editPost, setEditPost] = useState({ title: "", content: "", tags: "", image: "", category: "" }); 
     // Fetch all posts
     useEffect(() => {
         const fetchPosts = async () => {
@@ -42,34 +40,15 @@ const Post = () => {
                     headers: { Authorization: `Bearer ${token}` },
                 }
             );
-            setPosts([response.data.post, ...posts]);
+            const createdPost = {
+                ...response.data.post,
+                user: userData,
+            };
+            setPosts([createdPost, ...posts]);
             setIsFormOpen(false);
-            setNewPost({ title: "", content: "", tags: "", image: "" });
+            setNewPost({ title: "", content: "", tags: "", image: "", category: "" });
         } catch (error) {
             console.error("Failed to create post:", error);
-        }
-    };
-
-    // Handle adding a comment
-    const handleAddComment = async (postId) => {
-        try {
-            const response = await axios.post(
-                "/api/user/add-comment",
-                { postId, content: comment },
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
-            setPosts((prevPosts) =>
-                prevPosts.map((post) =>
-                    post._id === postId
-                        ? { ...post, comments: [...post.comments, response.data.comment] }
-                        : post
-                )
-            );
-            setComment("");
-        } catch (error) {
-            console.error("Failed to add comment:", error);
         }
     };
 
@@ -97,12 +76,11 @@ const Post = () => {
         }
     };
 
-    // Handle deleting a post
     const handleDeletePost = async (postId) => {
         try {
             const response = await axios.delete("/api/user/delete-post", {
                 headers: { Authorization: `Bearer ${token}` },
-                data: { postId }, // đúng chuẩn axios
+                data: { postId }, 
             });
 
             if (response.data.success) {
@@ -139,7 +117,6 @@ const Post = () => {
                 />
             </div>
 
-            {/* Posts List */}
             <div className="space-y-6 mt-6">
                 {posts.map((post) => (
                     <div key={post._id} className="bg-gray-800 p-4 rounded-lg relative">
@@ -153,8 +130,8 @@ const Post = () => {
                             />
                         )}
                         <p className="text-gray-500 text-sm mt-4">Posted by: {post.user?.name || "Unknown"}</p>
+                        <p className="text-gray-500 text-sm mt-2">Category: {post.category || "Uncategorized"}</p>
 
-                        {/* Dấu 3 chấm dọc */}
                         {post.user?._id === userData?._id && (
                             <div className="absolute top-4 right-4">
                                 <button
@@ -167,9 +144,9 @@ const Post = () => {
                                     <div className="absolute right-0 mt-2 bg-gray-700 text-white rounded-lg shadow-lg">
                                         <button
                                             onClick={() => {
-                                                setEditPost(post); // Lưu thông tin bài viết vào state
-                                                setIsEditFormOpen(true); // Mở form chỉnh sửa
-                                                setActiveMenu(null); // Đóng menu popup
+                                                setEditPost(post); 
+                                                setIsEditFormOpen(true);
+                                                setActiveMenu(null);
                                             }}
                                             className="block px-4 py-2 hover:bg-gray-600 w-full text-left"
                                         >
@@ -184,48 +161,11 @@ const Post = () => {
                                     </div>
                                 )}
                             </div>
-                        )}
-
-                        {/* Comments */}
-                        <div className="mt-4">
-                            <h4 className="text-lg font-bold">Comments</h4>
-                            {Array.isArray(post.comments) && post.comments.map((comment) => (
-                                <div key={comment._id} className="mt-2">
-                                    <p className="text-gray-400">
-                                        <span className="font-bold">{comment.user?.name || "Unknown"}:</span> {comment.content}
-                                    </p>
-
-                                    {/* Replies */}
-                                    <div className="ml-6 mt-2">
-                                        {Array.isArray(comment.replies) && comment.replies.map((reply) => (
-                                            <p key={reply._id} className="text-gray-400">
-                                                <span className="font-bold">{reply.user?.name || "Unknown"}:</span> {reply.content}
-                                            </p>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                            <div className="mt-4 flex items-center gap-2">
-                                <input
-                                    type="text"
-                                    value={comment}
-                                    onChange={(e) => setComment(e.target.value)}
-                                    placeholder="Write a comment..."
-                                    className="flex-1 p-2 rounded-lg bg-gray-700 text-white"
-                                />
-                                <button
-                                    onClick={() => handleAddComment(post._id)}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-                                >
-                                    Comment
-                                </button>
-                            </div>
+                        )}       
                         </div>
-                    </div>
                 ))}
             </div>
 
-            {/* Modal for Create Post Form */}
             {isFormOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-full max-w-lg">
@@ -269,6 +209,22 @@ const Post = () => {
                                     className="w-full p-2 rounded-lg bg-gray-800 text-white"
                                 />
                             </div>
+                            <div className="mb-4">
+                                <label className="block text-gray-300 mb-2">Category</label>
+                                <select
+                                    value={newPost.category}
+                                    onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
+                                    className="w-full p-2 rounded-lg bg-gray-800 text-white"
+                                    required
+                                >
+                                    <option value="">Select a category</option>
+                                    <option value="Car">Car</option>
+                                    <option value="Motorcycle">Motorcycle</option>
+                                    <option value="Truck">Truck</option>
+                                    <option value="SUV">SUV</option>
+                                    <option value="Van">Van</option>
+                                </select>
+                            </div>
                             <div className="flex justify-end gap-4">
                                 <button
                                     type="button"
@@ -289,7 +245,6 @@ const Post = () => {
                 </div>
             )}
 
-            {/* Modal for Edit Post Form */}
             {isEditFormOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-full max-w-lg">
@@ -339,6 +294,22 @@ const Post = () => {
                                     onChange={(e) => setEditPost({ ...editPost, image: e.target.value })}
                                     className="w-full p-2 rounded-lg bg-gray-800 text-white"
                                 />
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-gray-300 mb-2">Category</label>
+                                <select
+                                    value={editPost.category}
+                                    onChange={(e) => setEditPost({ ...editPost, category: e.target.value })}
+                                    className="w-full p-2 rounded-lg bg-gray-800 text-white"
+                                    required
+                                >
+                                    <option value="">Select a category</option>
+                                    <option value="Car">Car</option>
+                                    <option value="Motorcycle">Motorcycle</option>
+                                    <option value="Truck">Truck</option>
+                                    <option value="SUV">SUV</option>
+                                    <option value="Van">Van</option>
+                                </select>
                             </div>
                             <div className="flex justify-end gap-4">
                                 <button
